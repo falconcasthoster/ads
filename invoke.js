@@ -6,6 +6,7 @@
   iframe.width = ad.width || 320;
   iframe.height = ad.height || 50;
   iframe.style.border = "0";
+  iframe.style.backgroundColor = "#1e90ff";
   iframe.scrolling = "no";
   iframe.frameBorder = "0";
   iframe.marginWidth = "0";
@@ -44,17 +45,27 @@
 
   function getCountry() {
     return new Promise(function(resolve) {
-      var xhr = new XMLHttpRequest();
-      xhr.onload = function() {
-        try {
-          resolve(JSON.parse(xhr.responseText).country_code || 'default');
-        } catch (e) {
-          resolve('default');
+      try {
+        var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        var language = navigator.language || navigator.userLanguage || '';
+        
+        // Bangladesh detection
+        if (timezone === 'Asia/Dhaka' || language.includes('bn') || language.includes('BD')) {
+          resolve('BD');
+          return;
         }
-      };
-      xhr.onerror = function() { resolve('default'); };
-      xhr.open('GET', 'https://ipwhois.app/json/', true);
-      xhr.send();
+        
+        // India detection
+        if (timezone === 'Asia/Kolkata' || timezone === 'Asia/Calcutta' || 
+            language.includes('hi') || language.includes('IN')) {
+          resolve('IN');
+          return;
+        }
+        
+        resolve('default');
+      } catch (e) {
+        resolve('default');
+      }
     });
   }
 
@@ -75,9 +86,14 @@
     function showImage() {
       var img = countryConfig.images[currentIndex];
       doc.open();
-      doc.write('<a href="' + countryConfig.link + '" target="_blank" style="display:block;text-decoration:none;">' +
-                '<img src="' + img + '" style="width:100%;height:100%;border:0;display:block;" alt="Ad">' +
-                '</a>');
+      doc.write('<!DOCTYPE html><html><head><style>' +
+                'body{margin:0;padding:0;background-color:#1e90ff;width:100%;height:100%;overflow:hidden;}' +
+                '.ad-container{display:block;text-decoration:none;width:100%;height:100%;background-color:#1e90ff;position:relative;}' +
+                '.ad-image{width:100%;height:auto;border:0;display:block;background-color:#1e90ff;}' +
+                '</style></head><body>' +
+                '<a href="' + countryConfig.link + '" target="_blank" class="ad-container">' +
+                '<img src="' + img + '" class="ad-image" alt="Ad">' +
+                '</a></body></html>');
       doc.close();
     }
 
